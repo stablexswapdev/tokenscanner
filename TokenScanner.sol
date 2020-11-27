@@ -5,7 +5,7 @@
 pragma solidity ^0.6.12;
 pragma experimental ABIEncoderV2;
 
-interface IERC20 {
+interface IBEP20 {
     function name() external view returns (string memory);
     function symbol() external view returns (string memory);
     function decimals() external view returns (uint256);
@@ -20,13 +20,13 @@ interface IERC20 {
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-interface ISushiSwapPoolNames {
+interface IStableXSwapPoolNames {
     function logos(uint256) external view returns(string memory);
     function names(uint256) external view returns(string memory);
     function setPoolInfo(uint256 pid, string memory logo, string memory name) external;
 }
 
-interface ISushiToken is IERC20{
+interface IStaxToken is IBEP20{
     function delegates(address who) external view returns(address);
     function getCurrentVotes(address who) external view returns(uint256);
     function nonces(address who) external view returns(uint256);
@@ -46,7 +46,7 @@ interface IMasterChef {
     function poolLength() external view returns (uint256);
     function poolInfo(uint256 nr) external view returns (address, uint256, uint256, uint256);
     function userInfo(uint256 nr, address who) external view returns (uint256, uint256);
-    function pendingSushi(uint256 nr, address who) external view returns (uint256);
+    function pendingStax(uint256 nr, address who) external view returns (uint256);
 }
 
 interface IFactory {
@@ -57,7 +57,7 @@ interface IFactory {
     function feeToSetter() external view returns (address);
 }
 
-interface IPair is IERC20 {
+interface IPair is IBEP20 {
     function token0() external view returns (address);
     function token1() external view returns (address);
     function getReserves() external view returns (uint112, uint112, uint32);
@@ -86,7 +86,7 @@ contract Ownable {
     }
 }
 
-contract BoringCryptoTokenScanner
+contract TokenScanner
 {
     using SafeMath for uint256;
 
@@ -112,7 +112,7 @@ contract BoringCryptoTokenScanner
         TokenInfo[] memory infos = new TokenInfo[](addresses.length);
 
         for (uint256 i = 0; i < addresses.length; i++) {
-            IERC20 token = IERC20(addresses[i]);
+            IBEP20 token = IBEP20(addresses[i]);
             infos[i].token = address(token);
             
             infos[i].name = token.name();
@@ -127,7 +127,7 @@ contract BoringCryptoTokenScanner
         uint256 balanceCount;
 
         for (uint256 i = 0; i < addresses.length; i++) {
-            if (IERC20(addresses[i]).balanceOf(who) > 0) {
+            if (IBEP20(addresses[i]).balanceOf(who) > 0) {
                 balanceCount++;
             }
         }
@@ -136,7 +136,7 @@ contract BoringCryptoTokenScanner
 
         balanceCount = 0;
         for (uint256 i = 0; i < addresses.length; i++) {
-            IERC20 token = IERC20(addresses[i]);
+            IBEP20 token = IBEP20(addresses[i]);
             uint256 balance = token.balanceOf(who);
             if (balance > 0) {
                 balances[balanceCount].token = address(token);
@@ -152,7 +152,7 @@ contract BoringCryptoTokenScanner
         BalanceFull[] memory balances = new BalanceFull[](addresses.length);
 
         for (uint256 i = 0; i < addresses.length; i++) {
-            IERC20 token = IERC20(addresses[i]);
+            IBEP20 token = IBEP20(addresses[i]);
             balances[i].token = address(token);
             balances[i].balance = token.balanceOf(who);
 
@@ -229,7 +229,7 @@ contract BoringCryptoTokenScanner
 
         for(uint256 id = fromID; id < toID; id++) {
             address token = factory.allPairs(id);
-            if (IERC20(token).balanceOf(who) > 0) {
+            if (IBEP20(token).balanceOf(who) > 0) {
                 pairCount++;
             }
         }
@@ -239,7 +239,7 @@ contract BoringCryptoTokenScanner
         pairCount = 0;
         for(uint256 id = fromID; id < toID; id++) {
             address token = factory.allPairs(id);
-            uint256 balance = IERC20(token).balanceOf(who);
+            uint256 balance = IBEP20(token).balanceOf(who);
             if (balance > 0) {
                 pairs[pairCount].token = token;
                 pairs[pairCount].token0 = IPair(token).token0();
@@ -271,7 +271,7 @@ contract BoringCryptoTokenScanner
             (uint256 reserve0, uint256 reserve1,) = IPair(token).getReserves();
             pairs[i].reserve0 = reserve0;
             pairs[i].reserve1 = reserve1;
-            pairs[i].balance = IERC20(token).balanceOf(who);
+            pairs[i].balance = IBEP20(token).balanceOf(who);
         }
         return pairs;
     }
